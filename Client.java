@@ -13,7 +13,7 @@ public class Client {
     private BufferedReader bufferedReader;
     private  BufferedWriter bufferedWriter;
     private String username;
-    private  static String RoomID;
+    private  String RoomID;
 
     public Client(Socket socket,String username,String RoomID){
         try {
@@ -39,7 +39,7 @@ public class Client {
             Scanner scanner = new Scanner(System.in);
             while (socket.isConnected()){
                 String messageToSend = scanner.nextLine();
-                bufferedWriter.write(username+": "+messageToSend);
+                bufferedWriter.write(messageToSend);
                 bufferedWriter.newLine();
                 bufferedWriter.flush();
             }

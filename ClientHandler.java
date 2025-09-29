@@ -17,7 +17,7 @@ public class ClientHandler implements Runnable {
     private BufferedWriter bufferedWriter;
     private String clientUsername;
     private String clientRoomId;
-    private static ArrayList<ClientHandler> CurrentRoom;
+    private ArrayList<ClientHandler> CurrentRoom;
     private Server server;
 
 
@@ -29,6 +29,7 @@ public class ClientHandler implements Runnable {
             this.bufferedReader= new BufferedReader(new InputStreamReader(socket.getInputStream()));
             this.clientUsername = bufferedReader.readLine();
             this.clientRoomId = bufferedReader.readLine();
+            server.allClient.add(this);
             switch (clientRoomId) {
                 case "1"  : 
                     server.room1.add(this);
@@ -46,7 +47,7 @@ public class ClientHandler implements Runnable {
                     throw new AssertionError();
             }
             //this.bufferedReader.flush();
-            broadcastMessage("SERVER:"+clientUsername+" enter the chat ID:"+clientRoomId);
+            broadcastMessage("SERVER:"+clientUsername+" enter the chat ID: "+clientRoomId);
         } catch (IOException e) {
             closeEverything(socket,bufferedReader,bufferedWriter);
         }
@@ -57,10 +58,73 @@ public class ClientHandler implements Runnable {
         String messageFromClient;
         while (socket.isConnected()){
             try {
+
                 messageFromClient = bufferedReader.readLine();
-             
-                
-                broadcastMessage(messageFromClient);
+                String Temp;                
+                switch (messageFromClient) {
+                    case "say":
+                        if(CurrentRoom == null){
+                            Echo("You are not in any room rightnow! please enter room using command : join");
+                            break;
+                        }
+                        Echo("Enter Message :");
+                        Temp = bufferedReader.readLine();
+                        broadcastMessage(String.format("%s : %s",clientUsername,Temp));
+                        break;
+                    case "where":
+                        Temp = "You are currently in room : %s";
+                        Echo(String.format(Temp,clientRoomId));
+                        break;
+                    case "who":
+                        Temp = String.format("Current member of Room #%s",clientRoomId);
+                        Echo(Temp);
+                        for (ClientHandler clientHandler : this.CurrentRoom) {
+                         Temp = clientHandler.clientUsername;
+                         Echo(Temp);
+                        }
+                        break;
+                    case "join":
+                        if (CurrentRoom != null) {
+                         Echo("Please Leave Before joing any other room");
+                              break;
+                        } else {
+                            Echo("Enter Room you want to join:");
+                            clientRoomId = bufferedReader.readLine();
+                                switch (clientRoomId) {
+                                    case "1"  : 
+                                        server.room1.add(this);
+                                        CurrentRoom = server.room1;
+                                        break;
+                                    case "2" :
+                                        server.room2.add(this);
+                                        CurrentRoom = server.room2;
+                                        break;
+                                    case "3":
+                                        server.room3.add(this);
+                                        CurrentRoom = server.room3;
+                                        break;
+                                    default:
+                                        Echo("Join Error");
+                                        break;
+                                }
+                            break;
+                        }
+                    case "leave":
+                        if (CurrentRoom != null) {
+                         removeClientHandler();
+                              break;
+                        } else {
+                            Echo("You are Currently Not in Any Room!");                        
+                            break;
+                        }
+                    case "quit":
+                        if (CurrentRoom != null)removeClientHandler();   
+                        server.allClient.remove(this);
+                        break;
+                    default:
+                        Echo("Unknow Command");
+                }
+
             } catch (IOException e) {
                 closeEverything(socket,bufferedReader,bufferedWriter);
                 break;
@@ -68,10 +132,20 @@ public class ClientHandler implements Runnable {
         }
         
     }
+    public void Echo(String message){
+        try {
+            bufferedWriter.write(message);
+                bufferedWriter.newLine();
+                bufferedWriter.flush();
+        } catch (IOException e) {
+            closeEverything(socket, bufferedReader, bufferedWriter);
+        }
+                
+    }
     public void broadcastMessage(String messageToSend){
-            for (ClientHandler clientHandler : CurrentRoom){
+            for (ClientHandler clientHandler : this.CurrentRoom){
                 try {
-                    if (!clientHandler.clientUsername.equals(clientUsername) && clientHandler.clientRoomId.equals(clientRoomId)){
+                    if (!clientHandler.clientUsername.equals(clientUsername)){
                         clientHandler.bufferedWriter.write(messageToSend);
                         clientHandler.bufferedWriter.newLine();
                         clientHandler.bufferedWriter.flush();
@@ -81,10 +155,13 @@ public class ClientHandler implements Runnable {
                 }
             }
         }
+
         public void removeClientHandler(){
-            CurrentRoom.remove(this);
             broadcastMessage("Server:"+clientUsername+"Left");
+            CurrentRoom.remove(this);
+            CurrentRoom = null;
         }
+        
         public void closeEverything(Socket socket,BufferedReader bufferedReader , BufferedWriter bufferedWriter){
             removeClientHandler();
             try {

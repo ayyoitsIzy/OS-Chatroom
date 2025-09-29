@@ -5,9 +5,10 @@ import java.util.ArrayList;
 
 public class Server {
     private ServerSocket serverSocket;
-    public  static ArrayList<ClientHandler> room1 = new ArrayList<>();
-    public  static ArrayList<ClientHandler> room2 = new ArrayList<>();
-    public  static ArrayList<ClientHandler> room3 = new ArrayList<>();
+    public   ArrayList<ClientHandler> allClient = new ArrayList<>();
+    public   ArrayList<ClientHandler> room1 = new ArrayList<>();
+    public   ArrayList<ClientHandler> room2 = new ArrayList<>();
+    public   ArrayList<ClientHandler> room3 = new ArrayList<>();
 
     public Server(ServerSocket serverSocket){
         this.serverSocket = serverSocket;
