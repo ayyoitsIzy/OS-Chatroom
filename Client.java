@@ -60,7 +60,7 @@ public class Client {
                     {
                     closeEverything(socket,bufferedReader,bufferedWriter);
                     }   
-                    
+                        
 
                 }
             }

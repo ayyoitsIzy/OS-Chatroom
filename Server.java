@@ -1,9 +1,14 @@
 package OS;
 import java.io.IOException;
 import java.net.*;
+import java.util.ArrayList;
 
 public class Server {
     private ServerSocket serverSocket;
+    public  static ArrayList<ClientHandler> room1 = new ArrayList<>();
+    public  static ArrayList<ClientHandler> room2 = new ArrayList<>();
+    public  static ArrayList<ClientHandler> room3 = new ArrayList<>();
+
     public Server(ServerSocket serverSocket){
         this.serverSocket = serverSocket;
     }
@@ -13,8 +18,7 @@ public class Server {
             while (!serverSocket.isClosed()){
                 Socket socket = serverSocket.accept();
                 System.out.println("A new client connect");
-                ClientHandler clientHandler = new ClientHandler(socket);
-
+                ClientHandler clientHandler = new ClientHandler(socket,this);
                 Thread thread = new Thread(clientHandler);
                 thread.start();
             }

@@ -6,29 +6,46 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.util.*;
 import java.net.*;
-import java.nio.Buffer;
-import java.util.ArrayList;
+
 
 public class ClientHandler implements Runnable {
 
-    public  static ArrayList<ClientHandler> clientHandlers = new ArrayList<>();
     private Socket socket;
     private BufferedReader bufferedReader;
     private BufferedWriter bufferedWriter;
     private String clientUsername;
     private String clientRoomId;
+    private static ArrayList<ClientHandler> CurrentRoom;
+    private Server server;
 
 
-    public ClientHandler(Socket socket){
+    public ClientHandler(Socket socket,Server server){
         try {
+            this.server = server;
             this.socket = socket;
             this.bufferedWriter= new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             this.bufferedReader= new BufferedReader(new InputStreamReader(socket.getInputStream()));
             this.clientUsername = bufferedReader.readLine();
-            clientHandlers.add(this);
-            //this.bufferedReader.flush();
             this.clientRoomId = bufferedReader.readLine();
+            switch (clientRoomId) {
+                case "1"  : 
+                    server.room1.add(this);
+                    CurrentRoom = server.room1;
+                    break;
+                case "2" :
+                    server.room2.add(this);
+                    CurrentRoom = server.room2;
+                    break;
+                case "3":
+                    server.room3.add(this);
+                    CurrentRoom = server.room3;
+                    break;
+                default:
+                    throw new AssertionError();
+            }
+            //this.bufferedReader.flush();
             broadcastMessage("SERVER:"+clientUsername+" enter the chat ID:"+clientRoomId);
         } catch (IOException e) {
             closeEverything(socket,bufferedReader,bufferedWriter);
@@ -41,6 +58,8 @@ public class ClientHandler implements Runnable {
         while (socket.isConnected()){
             try {
                 messageFromClient = bufferedReader.readLine();
+             
+                
                 broadcastMessage(messageFromClient);
             } catch (IOException e) {
                 closeEverything(socket,bufferedReader,bufferedWriter);
@@ -50,7 +69,7 @@ public class ClientHandler implements Runnable {
         
     }
     public void broadcastMessage(String messageToSend){
-            for (ClientHandler clientHandler : clientHandlers){
+            for (ClientHandler clientHandler : CurrentRoom){
                 try {
                     if (!clientHandler.clientUsername.equals(clientUsername) && clientHandler.clientRoomId.equals(clientRoomId)){
                         clientHandler.bufferedWriter.write(messageToSend);
@@ -63,7 +82,7 @@ public class ClientHandler implements Runnable {
             }
         }
         public void removeClientHandler(){
-            clientHandlers.remove(this);
+            CurrentRoom.remove(this);
             broadcastMessage("Server:"+clientUsername+"Left");
         }
         public void closeEverything(Socket socket,BufferedReader bufferedReader , BufferedWriter bufferedWriter){
