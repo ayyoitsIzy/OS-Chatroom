@@ -61,7 +61,7 @@ public class ClientHandler implements Runnable {
         while (socket.isConnected()){
             try {
                 messageFromClient = bufferedReader.readLine();
-                String[] myArray = messageFromClient.split("\\s+");
+                String[] myArray = messageFromClient.split(" ", 2);
                 command = myArray[0];
                 if (myArray.length == 2) {
                     Text = myArray[1];
@@ -74,17 +74,19 @@ public class ClientHandler implements Runnable {
                             Echo("You are not in any room rightnow! please enter room using command : join");
                             break;
                         }
-                        Thread t2 = new Thread(() -> {
+                      
                         broadcastMessage(String.format("%s : %s",clientUsername,Text));
-                        });
-                        t2.start();
-                        
+                      
                         break;
                     case "where":
                         Temp = "You are currently in room : %s";
                         Echo(String.format(Temp,clientRoomId));
                         break;
                     case "who":
+                    if (CurrentRoom == null) {
+                        Echo("You are not in any room!");
+                        break;
+                    }
                         Temp = String.format("Current member of Room #%s",clientRoomId);
                         Echo(Temp);
                         for (ClientHandler clientHandler : this.CurrentRoom) {
@@ -96,8 +98,8 @@ public class ClientHandler implements Runnable {
                         if (CurrentRoom != null) {
                          Echo("Please Leave Before joing any other room");
                               break;
-                        } else {
-                            Echo("Enter Room you want to join:");
+                        } 
+
                             clientRoomId = Text;
                                 switch (clientRoomId) {
                                     case "1"  : 
@@ -116,8 +118,9 @@ public class ClientHandler implements Runnable {
                                         Echo("Join Error");
                                         break;
                                 }
+                                    broadcastMessage(String.format("User : %s has join the room", clientUsername));
                             break;
-                        }
+                        
                     case "leave":
                         if (CurrentRoom != null) {
                          removeClientHandler();
@@ -152,6 +155,8 @@ public class ClientHandler implements Runnable {
                 
     }
     public void broadcastMessage(String messageToSend){
+        if (CurrentRoom == null) return;
+          Thread t2 = new Thread(() -> {                     
             for (ClientHandler clientHandler : this.CurrentRoom){
                 try {
                     if (!clientHandler.clientUsername.equals(clientUsername)){
@@ -163,10 +168,13 @@ public class ClientHandler implements Runnable {
                     closeEverything(socket,bufferedReader,bufferedWriter);
                 }
             }
+                        });
+                        t2.start();
+           
         }
 
         public void removeClientHandler(){
-            broadcastMessage("Server:"+clientUsername+"Left");
+            broadcastMessage("Server:"+clientUsername+" Left");
             CurrentRoom.remove(this);
             CurrentRoom = null;
             clientRoomId = null;
