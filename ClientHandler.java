@@ -66,7 +66,6 @@ public class ClientHandler implements Runnable {
                 if (myArray.length == 2) {
                     Text = myArray[1];
                 }
-                Echo(String.format("Command : %s,%s ",command,Text));
                 String Temp;                
                 switch (command) {
                     case "say":
@@ -75,10 +74,14 @@ public class ClientHandler implements Runnable {
                             break;
                         }
                       
-                        broadcastMessage(String.format("%s : %s",clientUsername,Text));
                       
                         break;
                     case "where":
+                        if (CurrentRoom == null) {
+                            Temp = "You are not in any room right now";
+                            Echo(String.format(Temp,clientRoomId));
+                            break;
+                        }
                         Temp = "You are currently in room : %s";
                         Echo(String.format(Temp,clientRoomId));
                         break;
@@ -174,11 +177,24 @@ public class ClientHandler implements Runnable {
         }
 
         public void removeClientHandler(){
-            broadcastMessage("Server:"+clientUsername+" Left");
-            CurrentRoom.remove(this);
-            CurrentRoom = null;
-            clientRoomId = null;
+            Thread t2 = new Thread(() -> {  
+             for (ClientHandler clientHandler : this.CurrentRoom){
+                try {
+                    if (!clientHandler.clientUsername.equals(clientUsername)){
+                        clientHandler.bufferedWriter.write(String.format(" User %s Left the chat room",clientUsername));
+                        clientHandler.bufferedWriter.newLine();
+                        clientHandler.bufferedWriter.flush();
+                    }
+                } catch (IOException e) {
+                    closeEverything(socket,bufferedReader,bufferedWriter);
+                }
+                   CurrentRoom.remove(this);
+                   CurrentRoom = null;
+                   clientRoomId = null;
 
+            }
+              }); t2.start();
+         
         }
          
         
