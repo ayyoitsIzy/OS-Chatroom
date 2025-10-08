@@ -73,8 +73,7 @@ public class ClientHandler implements Runnable {
                             Echo("You are not in any room rightnow! please enter room using command : join");
                             break;
                         }
-                      
-                      
+                        broadcastMessage(String.format("%s : %s",clientUsername,Text));
                         break;
                     case "where":
                         if (CurrentRoom == null) {
@@ -177,7 +176,7 @@ public class ClientHandler implements Runnable {
         }
 
         public void removeClientHandler(){
-            Thread t2 = new Thread(() -> {  
+            Thread t3 = new Thread(() -> {  
              for (ClientHandler clientHandler : this.CurrentRoom){
                 try {
                     if (!clientHandler.clientUsername.equals(clientUsername)){
@@ -193,7 +192,7 @@ public class ClientHandler implements Runnable {
                    clientRoomId = null;
 
             }
-              }); t2.start();
+              }); t3.start();
          
         }
          
